@@ -1,5 +1,5 @@
 ﻿// <copyright file="Component.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 namespace Anki.Vector
@@ -15,7 +15,7 @@ namespace Anki.Vector
         /// <summary>
         /// Gets the robot instance
         /// </summary>
-        internal Robot Robot { get ; }
+        internal Robot Robot { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Component" /> class.

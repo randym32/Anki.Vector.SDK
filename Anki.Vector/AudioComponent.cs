@@ -1,5 +1,5 @@
 ﻿// <copyright file="AudioComponent.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 namespace Anki.Vector
@@ -45,7 +45,6 @@ namespace Anki.Vector
         /// <summary>The playback was cancelled</summary>
         Cancelled
     }
-
 
     /// <summary>
     /// Support for Vector’s speakers
@@ -114,8 +113,9 @@ namespace Anki.Vector
         public bool IsPlaybackActive => playbackFeed.IsActive;
 
         /// <summary>
-        /// Starts the audio feed.  The feed will run in a background thread and raise the <see cref="AudioReceived" /> event for each received image. 
+        /// Starts the audio feed.  The feed will run in a background thread and raise the <see cref="AudioReceived" /> event for each received image.
         /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         [Obsolete("The audio feed on Vector was never enabled", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public async Task StartAudioFeed()
@@ -159,8 +159,7 @@ namespace Anki.Vector
         public async Task<PlaybackResult> PlayStream(Stream stream, uint frameRate, uint volume = 50)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (frameRate < 8000 || frameRate > 16025)
-                throw new ArgumentOutOfRangeException(nameof(frameRate), "The frameRate must be between 8000 and 16025");
+            if (frameRate < 8000 || frameRate > 16025) throw new ArgumentOutOfRangeException(nameof(frameRate), "The frameRate must be between 8000 and 16025");
             if (volume > 100) throw new ArgumentOutOfRangeException(nameof(volume), "Volume must be between 0 and 100");
 
             playbackResult?.TrySetCanceled();

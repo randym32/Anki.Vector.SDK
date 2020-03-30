@@ -1,5 +1,5 @@
 ﻿// <copyright file="Authentication.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 using System;
@@ -210,24 +210,32 @@ namespace Anki.Vector
                     new KeyValuePair<string, string>("username", emailAddress),
                     new KeyValuePair<string, string>("password", password)
                 });
-                using (var response = await HttpClient.SendAsync(request).ConfigureAwait(false))
+                try
                 {
-                    // If the result is forbidden then login is incorrect
-                    if (response.StatusCode == HttpStatusCode.Forbidden)
+                    using (var response = await HttpClient.SendAsync(request).ConfigureAwait(false))
                     {
-                        throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Invalid email address or password.");
-                    }
+                        // If the result is forbidden then login is incorrect
+                        if (response.StatusCode == HttpStatusCode.Forbidden)
+                        {
+                            throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Invalid email address or password.");
+                        }
 
-                    try
-                    {
-                        response.EnsureSuccessStatusCode();
-                        var json = JObject.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-                        return json["session"]["session_token"].Value<string>();
+                        try
+                        {
+                            response.EnsureSuccessStatusCode();
+                            var json = JObject.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                            return json["session"]["session_token"].Value<string>();
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Invalid response from Anki accounts API", ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Invalid response from Anki accounts API", ex);
-                    }
+                } 
+                catch (Exception ex)
+                {
+                    if (ex is VectorAuthenticationException) throw;
+                    throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Failure to connect to Anki accounts API", ex);
                 }
             }
         }
@@ -266,39 +274,35 @@ namespace Anki.Vector
             if (!RobotNameIsValid(robotName)) throw new ArgumentException("Robot name is not in the correct format.", nameof(robotName));
             if (string.IsNullOrWhiteSpace(host)) throw new ArgumentNullException(nameof(host), "Host must be provided.");
 
-            if (!host.Contains(':')) host += ":443";
-
-            // Create the channel
-            var channel = new Channel(
-                host,
-                ChannelCredentials.Create(new SslCredentials(certificate), CallCredentials.FromInterceptor((context, metadata) => Task.CompletedTask)),
-                new ChannelOption[] { new ChannelOption("grpc.ssl_target_name_override", robotName) }
-            );
+            Client client = null;
 
             try
             {
-                // Open the channel
-                await channel.ConnectAsync(Robot.GrpcDeadline(15_000)).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                // If failed to open channel throw exception
-                throw new VectorAuthenticationException(VectorAuthenticationFailureType.Connection, "Unable to establish a connection to Vector.", ex);
-            }
+                try
+                {
+                    client = await Client.ConnectForAuth(certificate, host, robotName, 15_000).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    throw new VectorAuthenticationException(VectorAuthenticationFailureType.Connection, "Unable to establish a connection to Vector.", ex);
+                }
 
-            // Create the client and return the response
-            var client = new ExternalInterfaceClient(channel);
-            var response = await client.UserAuthenticationAsync(new UserAuthenticationRequest()
-            {
-                UserSessionId = Google.Protobuf.ByteString.CopyFromUtf8(sessionId),
-                ClientName = Google.Protobuf.ByteString.CopyFromUtf8(Dns.GetHostName())
-            });
-            if (response.Code != UserAuthenticationResponse.Types.Code.Authorized)
-            {
-                throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Failed to authorize request.  Please be sure to first set up Vector using the companion app.");
+                var response = await client.RunCommand(c => c.UserAuthenticationAsync(new UserAuthenticationRequest()
+                {
+                    UserSessionId = Google.Protobuf.ByteString.CopyFromUtf8(sessionId),
+                    ClientName = Google.Protobuf.ByteString.CopyFromUtf8(Dns.GetHostName())
+                }));
+
+                if (response.Code != UserAuthenticationResponse.Types.Code.Authorized)
+                {
+                    throw new VectorAuthenticationException(VectorAuthenticationFailureType.Login, "Failed to authorize request.  Please be sure to first set up Vector using the companion app.");
+                }
+                return response.ClientTokenGuid.ToStringUtf8();
             }
-            await channel.ShutdownAsync().ConfigureAwait(false);
-            return response.ClientTokenGuid.ToStringUtf8();
+            finally
+            {
+                client?.Dispose();
+            }
         }
 
         /// <summary>

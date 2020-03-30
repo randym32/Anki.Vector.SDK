@@ -1,5 +1,5 @@
 ﻿// <copyright file="RobotLifetimeStats.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 using System;
@@ -32,13 +32,13 @@ namespace Anki.Vector.Types
         public int UtilitiesUsed { get; private set; }
 
         /// <summary>
-        /// Gets the distance driven.
+        /// Gets the distance driven as millions of centimeters.
         /// </summary>
         [JsonProperty("Odom.Body")]
-        public int DistanceDriven { get; private set; }
+        public decimal DistanceDriven { get; private set; }
 
         /// <summary>
-        /// Gets the duration of the petting in seconds.
+        /// Gets the duration of the petting in milliseconds.
         /// </summary>
         [JsonProperty("Pet.ms")]
         public int PettingDuration { get; private set; }

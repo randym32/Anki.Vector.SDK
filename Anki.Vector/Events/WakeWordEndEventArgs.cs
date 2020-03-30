@@ -1,5 +1,5 @@
 ﻿// <copyright file="WakeWordEndEventArgs.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 namespace Anki.Vector.Events
@@ -18,7 +18,7 @@ namespace Anki.Vector.Events
         public bool IntentHeard { get; }
 
         /// <summary>
-        /// The intent and parameters as a JSON formatted string.
+        /// Gets the intent and parameters as a JSON formatted string.
         /// This is empty if an intent was not heard (IntentHeard is false), or if the client does not have control.
         /// In the later case, a UserIntent event with the intent JSON data will be sent.
         /// </summary>

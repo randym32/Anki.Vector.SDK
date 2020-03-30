@@ -1,5 +1,5 @@
 ﻿// <copyright file="BehaviorComponent.cs" company="Wayne Venables">
-//     Copyright (c) 2019 Wayne Venables. All rights reserved.
+//     Copyright (c) 2020 Wayne Venables. All rights reserved.
 // </copyright>
 
 using System;
@@ -496,24 +496,27 @@ namespace Anki.Vector
         /// Request that Vector listens for a beat.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> ListenForBeat()
         {
             return AppIntent("intent_imperative_dance");
         }
 
         /// <summary>
-        /// Request that Vector start's exploring
+        /// Request that Vector start's exploring.  Vector reacts but doens't seem to actually start exploring with this method.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> StartExploring()
         {
             return AppIntent("explore_start");
         }
 
         /// <summary>
-        /// Request that Vector looks for a face and says the associated name.
+        /// Request that Vector looks for a face and say the associated name.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> SayName()
         {
             return AppIntent("intent_names_ask");
@@ -523,6 +526,7 @@ namespace Anki.Vector
         /// Requests that Vector goes to sleep
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> Sleep()
         {
             return AppIntent("intent_system_sleep");
@@ -532,6 +536,7 @@ namespace Anki.Vector
         /// Requests that Vector listen for a knowledge question and provide response.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> ListenForQuestion()
         {
             return AppIntent("knowledge_question");
@@ -541,6 +546,7 @@ namespace Anki.Vector
         /// Requests that Vector finds his cube.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation; the task result contains the result from the robot.</returns>
+        /// <remarks>This method will automatically release control.</remarks>
         public Task<StatusCode> FindCube()
         {
             return AppIntent("intent_imperative_findcube");
@@ -552,10 +558,11 @@ namespace Anki.Vector
         /// <param name="intent">The intent for Vector carry out.</param>
         /// <param name="param">Any extra parameters.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
+        /// <remarks>Since AppIntents are run by Vector's AI; this method will automatically release control.</remarks>
         /// <remarks>The intent is not the same namespace as UserIntent</remarks>
-        /// <remarks>Requires releasing behavior control before.  Otherwise, the intent is at too low of priority to run.</remarks>
         public async Task<StatusCode> AppIntent(string intent, string param = "")
         {
+            await Robot.Control.InternalReleaseControl().ConfigureAwait(false);
             var response = await Robot.RunMethod(client => client.AppIntentAsync(new AppIntentRequest()
             {
                 Intent = intent,
@@ -589,6 +596,7 @@ namespace Anki.Vector
         /// Called when disconnecting
         /// </summary>
         /// <param name="forced">if set to <c>true</c> the shutdown is forced due to lost connection.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Not a general exception")]
         internal override async Task Teardown(bool forced)
         {
